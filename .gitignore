@@ -1,0 +1,13 @@
+.deps/
+Makefile
+autom4te.cache/
+config.log
+config.status
+configure
+java/target/
+native/target/
+.idea/
+JSyncProject.iml
+java/JSync.iml
+java/src/main/Main.iml
+

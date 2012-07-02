@@ -1,0 +1,41 @@
+<project>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.jsync</groupId>
+    <artifactId>libjsync</artifactId>
+    <version>${version}</version>
+    <packaging>so</packaging>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>native-maven-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <compilerProvider>generic-classic</compilerProvider>
+                    <compilerExecutable>gcc</compilerExecutable>
+                    <linkerStartOptions>
+                        <linkerStartOption>-shared</linkerStartOption>
+                    </linkerStartOptions>
+                    <compilerStartOptions>
+                        <compilerStartOption>-fPIC</compilerStartOption>
+                    </compilerStartOptions>
+
+                    <sources>
+                        <source>
+                            <directory>src</directory>
+                            <includes>
+                                <include>**/*.c</include>
+                            </includes>
+                            <fileNames>
+                                <fileName>libjsync.c</fileName>
+                            </fileNames>
+                        </source>
+                    </sources>
+                </configuration>
+            </plugin>
+
+
+        </plugins>
+    </build>
+
+</project>

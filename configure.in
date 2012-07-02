@@ -1,0 +1,39 @@
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+AC_PREREQ([2.68])
+AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
+AM_INIT_AUTOMAKE
+AC_CONFIG_FILES([Makefile])
+AC_CONFIG_SRCDIR([native/src/libjsync.c])
+
+# Checks for programs.
+AC_PROG_CC
+AC_CHECK_PROG([HAS_MAVEN], [mvn], [yes])
+if test x"$HAS_MAVEN" != x"yes" ; then
+    AC_MSG_ERROR([Please install maven before continuing.])
+fi
+AC_PATH_PROG([MAVEN],[mvn])
+
+AC_CHECK_PROG([HAS_JAVA], [java], [yes])
+if test x"$HAS_JAVA" != x"yes" ; then
+    AC_MSG_ERROR([Please install java before continuing.])
+fi
+AC_PATH_PROG([JAVA_EXEC_PATH],[java])
+
+
+# Checks for libraries.
+
+# Checks for header files.
+AC_CHECK_HEADERS([stdlib.h sys/time.h utime.h])
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_TYPE_UID_T
+AC_TYPE_MODE_T
+
+# Checks for library functions.
+AC_FUNC_MALLOC
+
+VERSION=`cat VERSION | tr -d ' '`
+
+AC_OUTPUT
