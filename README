@@ -1,7 +1,7 @@
 JSync
 -----
 
-Sync folder to and from Amazon S3 and other cloud services with an interface similar to rsync.
+Sync folders to and from Amazon S3 and other cloud services with an interface similar to rsync.
 
 
 Features
@@ -16,6 +16,8 @@ Features
 
 Installation
 ------------
+
+Requires java and maven to build.  Requires java to run.
 
     ./configure
     make
