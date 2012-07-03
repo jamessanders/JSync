@@ -39,7 +39,7 @@ AC_FUNC_MALLOC
 VERSION=`cat VERSION | tr -d ' '`
 
 case "$build_os" in
-     darwin*) AC_SUBST([SHARE_LIB_EXT],[dynlib]);;
+     darwin*) AC_SUBST([SHARE_LIB_EXT],[dylib]);;
      linux-*) AC_SUBST([SHARE_LIB_EXT],[so]);;
      *) AC_SUBST([SHARE_LIB_EXT],[so]);;
 esac

@@ -4292,7 +4292,7 @@ fi
 VERSION=`cat VERSION | tr -d ' '`
 
 case "$build_os" in
-     darwin*) SHARE_LIB_EXT=dynlib
+     darwin*) SHARE_LIB_EXT=dylib
 ;;
      linux-*) SHARE_LIB_EXT=so
 ;;
