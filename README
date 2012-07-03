@@ -1,0 +1,62 @@
+JSync
+-----
+
+Sync folder to and from Amazon S3 and other cloud services with an interface similar to rsync.
+
+
+Features
+--------
+
+   * Only uploads/downloads files that have changed on the source
+   * Can delete file on the destination that do not exists on the source (with the --delete flag)
+   * Can backup any changed files on the destination (with the --backup flag)
+   * Preserves permission, modification times and symlinks
+   * Works on Linux and OS X.  Windows support is planned.
+
+
+Installation
+------------
+
+    ./configure
+    make
+    sudo make install
+
+If the configure step fails with an error about config.guess not be available add the current directory to you path
+like so: 
+  
+    export PATH=".:$PATH"
+
+
+How to use
+----------
+
+    1. First place a file in you home directory called '.awssecret' and add you access key on line one and your secret key on line two.
+       It is probably a good idea to limit the permission on this file  (chmod 600 ~/.awssecret)
+
+    2. Use the jsync command to sync your files
+
+Example
+-------
+
+Simple upload to S3
+
+    jsync ~/My-Photos s3://my-bucket/my-photos-backups
+
+Simple download from S3
+
+    jsync s3://my-bucket/my-photos-backups ~/My-Photos
+
+Sync a local directory to S3 and delete any files that no longer exists on the local folder
+
+    jsync --delete ~/My-Photos s3://my-bucket/my-photos-backups
+
+Sync a local directory to S3 and delete and file that no longer exists also, make backups of
+and files that get modified or deleted
+
+    jsync --delete --backup s3://my-bucket/trash ~/My-Photos s3://my-bucket/my-photos-backups
+
+Sync a local directory to S3 and use reduced redundancy storage mode
+
+    jsync --reduced-redundancy ~/My-Photos s3://my-bucket/my-photos-backups
+
+
