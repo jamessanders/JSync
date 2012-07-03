@@ -4292,11 +4292,11 @@ fi
 VERSION=`cat VERSION | tr -d ' '`
 
 case "$build_os" in
-     apple-*) SHARE_LIB_EXT=dynlib
+     darwin*) SHARE_LIB_EXT=dynlib
 ;;
      linux-*) SHARE_LIB_EXT=so
 ;;
-     *) SHARE_LIB_EXT=dll
+     *) SHARE_LIB_EXT=so
 ;;
 esac
 
