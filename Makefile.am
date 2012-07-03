@@ -10,7 +10,7 @@ native/target/libjsync.so: native/src/libjsync.c
 	gcc -shared -fPIC native/src/libjsync.c -o native/target/libjsync.so
 
 native/target/libjsync.dylib: native/src/libjsync.c
-	gcc -shared -fPIC native/src/libjsync.c -o native/target/libjsync.dylib
+	gcc -dynamiclib -fPIC native/src/libjsync.c -o native/target/libjsync.dylib
 
 native/target/jsync: native/target java/target/JSync-$(VERSION)-jar-with-dependencies.jar mkexec.sh
 	sh mkexec.sh $(JAVA_EXEC_PATH) $(libdir)/JSync/JSync.jar $(libdir)/JSync > native/target/jsync
