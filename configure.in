@@ -7,6 +7,8 @@ AM_INIT_AUTOMAKE
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_SRCDIR([native/src/libjsync.c])
 
+AC_CANONICAL_BUILD
+
 # Checks for programs.
 AC_PROG_CC
 AC_CHECK_PROG([HAS_MAVEN], [mvn], [yes])
@@ -35,5 +37,12 @@ AC_TYPE_MODE_T
 AC_FUNC_MALLOC
 
 VERSION=`cat VERSION | tr -d ' '`
+
+case "$build_os" in
+     apple-*) AC_SUBST([SHARE_LIB_EXT],[dynlib]);;
+     linux-*) AC_SUBST([SHARE_LIB_EXT],[so]);;
+     *) AC_SUBST([SHARE_LIB_EXT],[dll]);;
+esac
+
 
 AC_OUTPUT

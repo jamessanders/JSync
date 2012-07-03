@@ -1,19 +1,26 @@
-bin_PROGRAMS = native/target/jsync
+bin_PROGRAMS = native/target/jsync 
 
 java/target/JSync-$(VERSION)-jar-with-dependencies.jar: java/target/JSync-$(VERSION).jar
 	(cd java; $(MAVEN) assembly:single -Dversion=$(VERSION))
 
-java/target/JSync-$(VERSION).jar: native/target/libjsync.so $(SRC_FILES) java/src/main/java/com/jsync/*.java
+java/target/JSync-$(VERSION).jar: native/target/libjsync.$(SHARE_LIB_EXT) $(SRC_FILES) java/src/main/java/com/jsync/*.java
 	$(MAVEN) install -Dversion=$(VERSION)
 
 native/target/libjsync.so: native/src/libjsync.c
-	$(MAVEN) install -Dversion=$(VERSION)
+	gcc -shared -fPIC native/src/libjsync.c -o native/target/libjsync.so
+
+native/target/libjsync.dynlib: native/src/libjsync.c
+	gcc -shared -fPIC native/src/libjsync.c -o native/target/libjsync.dynlib
 
 native/target/jsync: native/target java/target/JSync-$(VERSION)-jar-with-dependencies.jar mkexec.sh
 	sh mkexec.sh $(JAVA_EXEC_PATH) $(libdir)/JSync/JSync.jar $(libdir)/JSync > native/target/jsync
 
 native/target:
 	mkdir native/target
+
+clean:
+	rm -Rf native/target
+	rm -Rf java/target
 
 install: 
 	-mkdir $(libdir)/JSync

@@ -32,11 +32,13 @@ POST_INSTALL = :
 NORMAL_UNINSTALL = :
 PRE_UNINSTALL = :
 POST_UNINSTALL = :
+build_triplet = @build@
 bin_PROGRAMS = native/target/jsync$(EXEEXT)
 subdir = .
 DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(top_srcdir)/configure AUTHORS COPYING \
-	ChangeLog INSTALL NEWS depcomp install-sh missing
+	ChangeLog INSTALL NEWS config.guess config.sub depcomp \
+	install-sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.in
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
@@ -124,6 +126,7 @@ PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 SET_MAKE = @SET_MAKE@
+SHARE_LIB_EXT = @SHARE_LIB_EXT@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
@@ -138,7 +141,11 @@ am__quote = @am__quote@
 am__tar = @am__tar@
 am__untar = @am__untar@
 bindir = @bindir@
+build = @build@
 build_alias = @build_alias@
+build_cpu = @build_cpu@
+build_os = @build_os@
+build_vendor = @build_vendor@
 builddir = @builddir@
 datadir = @datadir@
 datarootdir = @datarootdir@
@@ -535,8 +542,6 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-clean: clean-am
-
 clean-am: clean-binPROGRAMS clean-generic mostlyclean-am
 
 distclean: distclean-am
@@ -629,17 +634,24 @@ uninstall-am: uninstall-binPROGRAMS
 java/target/JSync-$(VERSION)-jar-with-dependencies.jar: java/target/JSync-$(VERSION).jar
 	(cd java; $(MAVEN) assembly:single -Dversion=$(VERSION))
 
-java/target/JSync-$(VERSION).jar: native/target/libjsync.so $(SRC_FILES) java/src/main/java/com/jsync/*.java
+java/target/JSync-$(VERSION).jar: native/target/libjsync.$(SHARE_LIB_EXT) $(SRC_FILES) java/src/main/java/com/jsync/*.java
 	$(MAVEN) install -Dversion=$(VERSION)
 
 native/target/libjsync.so: native/src/libjsync.c
-	$(MAVEN) install -Dversion=$(VERSION)
+	gcc -shared -fPIC native/src/libjsync.c -o native/target/libjsync.so
+
+native/target/libjsync.dynlib: native/src/libjsync.c
+	gcc -shared -fPIC native/src/libjsync.c -o native/target/libjsync.dynlib
 
 native/target/jsync: native/target java/target/JSync-$(VERSION)-jar-with-dependencies.jar mkexec.sh
 	sh mkexec.sh $(JAVA_EXEC_PATH) $(libdir)/JSync/JSync.jar $(libdir)/JSync > native/target/jsync
 
 native/target:
 	mkdir native/target
+
+clean:
+	rm -Rf native/target
+	rm -Rf java/target
 
 install: 
 	-mkdir $(libdir)/JSync
