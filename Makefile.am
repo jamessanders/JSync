@@ -25,5 +25,5 @@ clean:
 install: 
 	-mkdir $(libdir)/JSync
 	install -o root -g `id -n -g root` java/target/JSync-$(VERSION)-jar-with-dependencies.jar $(libdir)/JSync/JSync.jar
-	install -o root -g `id -n -g root` native/target/libjsync.so $(libdir)/JSync/
+	install -o root -g `id -n -g root` native/target/libjsync.$(SHARE_LIB_EXT) $(libdir)/JSync/
 	install -o root -g `id -n -g root` native/target/jsync $(bindir)
