@@ -19,8 +19,8 @@ public interface IResource {
     public String toString();
     public Boolean finishWrite();
     public long lastModified();
-    public float getSize();
-    public void setSize(float size);
+    public long getSize();
+    public void setSize(long size);
     public void delete();
 
     // File Properties

@@ -144,11 +144,11 @@ public class FsResource implements IResource {
         return file.lastModified();
     }
 
-    public float getSize() {
+    public long getSize() {
         return file.length();
     }
 
-    public void setSize(float size) {
+    public void setSize(long size) {
 
     }
 

@@ -9,6 +9,7 @@ import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -178,7 +179,12 @@ public class S3Resource implements IResource {
 
     public long lastModified() {
         if (s3ObjectSummary == null) {
-            return 0;
+            Date lastModifed = getS3Metadata().getLastModified();
+            if (lastModifed != null) {
+                return lastModifed.getTime();
+            } else {
+                return 0;
+            }
         } else {
             return s3ObjectSummary.getLastModified().getTime();
         }
@@ -196,7 +202,7 @@ public class S3Resource implements IResource {
     }
 
 
-    public float getSize() {
+    public long getSize() {
         if (s3ObjectSummary != null) {
             return s3ObjectSummary.getSize();
         } else {
@@ -204,8 +210,8 @@ public class S3Resource implements IResource {
         }
     }
 
-    public void setSize(float size) {
-        getS3Metadata().setContentLength((long)size);
+    public void setSize(long size) {
+        getS3Metadata().setContentLength(size);
     }
 
     public String getMimeType() {
