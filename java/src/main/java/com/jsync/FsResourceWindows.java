@@ -50,7 +50,7 @@ public class FsResourceWindows extends FsResource {
 
     @Override
     public int getMode() {
-        return 0;
+        return -1;
     }
 
     @Override
@@ -59,7 +59,7 @@ public class FsResourceWindows extends FsResource {
 
     @Override
     public int getGid() {
-        return 0;
+        return -1;
     }
 
     @Override
@@ -68,37 +68,33 @@ public class FsResourceWindows extends FsResource {
 
     @Override
     public int getUid() {
-        return 0;
+        return -1;
     }
 
     @Override
     public void setMode(int mode) {
-
     }
 
     @Override
     public void createSymlink(String target) {
-
     }
 
     @Override
     public long getAccessTime() {
-        return 0;
+        return -1;
     }
 
     @Override
     public void setAccessTime(long accessTime) {
-
     }
 
     @Override
     public long getModifiedTime() {
-        return 0;
+        return super.lastModified();
     }
 
     @Override
     public void setModifiedTime(long modifiedTime) {
-
     }
 
     @Override

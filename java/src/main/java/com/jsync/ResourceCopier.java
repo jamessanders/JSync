@@ -19,12 +19,19 @@ public class ResourceCopier {
 
             out.mkdirs();
 
-            out.setUid(in.getUid());
-            out.setGid(in.getGid());
-            out.setMode(in.getMode());
 
-            out.setAccessTime(in.getAccessTime());
-            out.setModifiedTime(in.getModifiedTime());
+            int uid = in.getUid();
+            int gid = in.getGid();
+            int mode = in.getMode();
+            long atime = in.getAccessTime();
+            long mtime = in.getModifiedTime();
+
+            if (uid != -1)   out.setUid(uid);
+            if (gid != -1)   out.setGid(gid);
+            if (mode != -1)  out.setMode(mode);
+            if (atime != -1) out.setAccessTime(atime);
+            if (mtime != -1) out.setModifiedTime(mtime);
+
             out.setMimeType(in.getMimeType());
             out.setSize(in.getSize());
 

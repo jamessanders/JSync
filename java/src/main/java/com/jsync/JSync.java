@@ -3,7 +3,11 @@ package com.jsync;
 import java.io.IOException;
 
 public class JSync {
-
+    static {
+        if (System.getenv("LIBJSYNC_PATH") != null) {
+            System.setProperty("jna.library.path", System.getenv("LIBJSYNC_PATH"));
+        }
+    }
     public static void main(String[] args) throws IOException {
 
         JSyncOptions options = new JSyncOptions(args);

@@ -1,0 +1,1 @@
+"C:\Program Files (x86)\JSmooth 0.9.9-7\jsmoothcmd.exe" jsync.jsmooth

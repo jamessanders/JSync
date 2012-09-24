@@ -1,7 +1,7 @@
 package com.jsync;
 
 import com.amazonaws.auth.AWSCredentials;
-
+import org.apache.commons.lang3.SystemUtils;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -40,9 +40,7 @@ public class ResourceGenerator {
         try {
             uri = new URI(path);
         } catch (URISyntaxException e) {
-            System.out.println(System.getProperty("os.name"));
-            if (System.getProperty("os.name").equals("Windows 7")) {
-                System.out.println("Using windows style files");
+            if (SystemUtils.IS_OS_WINDOWS) {
                 return new FsResourceWindows(path);
             } else {
                 return new FsResource(path);
