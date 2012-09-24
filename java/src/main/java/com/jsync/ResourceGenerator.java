@@ -40,8 +40,13 @@ public class ResourceGenerator {
         try {
             uri = new URI(path);
         } catch (URISyntaxException e) {
-            System.out.println("Cannot parse URI");
-            return new FsResource(path);
+            System.out.println(System.getProperty("os.name"));
+            if (System.getProperty("os.name").equals("Windows 7")) {
+                System.out.println("Using windows style files");
+                return new FsResourceWindows(path);
+            } else {
+                return new FsResource(path);
+            }
         }
         String scheme = uri.getScheme();
         if (scheme == null || scheme.equals("file")) {
