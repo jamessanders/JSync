@@ -10,22 +10,37 @@ import java.util.List;
 
 public class JSyncOptions {
 
+    OptionParser parser;
     OptionSet options;
     List<String> arguments;
 
     public JSyncOptions(String[] args) {
 
-        OptionParser parser = new OptionParser();
-
-        parser.accepts("aws").withRequiredArg();
-        parser.accepts("delete");
-        parser.accepts("reduced-redundancy");
-        parser.accepts("rr-storage");
-        parser.accepts("verbose");
-        parser.accepts("backup").withRequiredArg();
-
+        parser = new OptionParser() {
+            {
+                accepts("aws", "aws credentials (seperated by ':')").withRequiredArg().describedAs( "credentials" );
+                accepts("delete", "delete files at destination that do not exists in the source dir");
+                accepts("reduced-redundancy", "use reduced redundancy when uploading files to S3");
+                accepts("rr-storage", "same as --reduced-redundancy");
+                accepts("verbose",  "be verbose");
+                accepts("help", "show this help");
+                accepts("backup", "backup any modified or deleted files" ).withRequiredArg().describedAs("path");
+            }
+        };
         options = parser.parse(args);
         arguments = options.nonOptionArguments();
+    }
+
+    public void showHelp() {
+        try {
+            parser.printHelpOn(System.err);
+        } catch (IOException e) {
+
+        }
+    }
+
+    public boolean needsHelp() {
+        return options.has("help");
     }
 
     public boolean doDelete() {
