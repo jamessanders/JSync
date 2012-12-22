@@ -29,6 +29,7 @@ public class S3Resource implements IResource {
     S3ObjectSummary s3ObjectSummary;
     ObjectMetadata s3MetaData;
     boolean useReducedRedundancy;
+    int offset;
 
     public S3Resource(S3ObjectSummary s3ObjectSummary,
                       String bucket,
@@ -37,7 +38,8 @@ public class S3Resource implements IResource {
                       Boolean isDirectory,
                       S3ResourceGenerator s3ResourceGenerator,
                       AmazonS3Client client,
-                      boolean useReducedRedundacy) {
+                      boolean useReducedRedundacy,
+                      int offset) {
         try {
             this.path = new URI(path);
         } catch (URISyntaxException e) {
@@ -51,6 +53,7 @@ public class S3Resource implements IResource {
         this.s3ResourceGenerator = s3ResourceGenerator;
         this.s3MetaData = null;
         this.useReducedRedundancy = useReducedRedundacy;
+        this.offset = offset;
     }
 
     public AmazonS3Client getClient() { return client; }
@@ -67,10 +70,27 @@ public class S3Resource implements IResource {
         return path.toString();
     }
 
+    public List<S3Resource> getChildren() {
+        if (this.children != null) {
+            return this.children;
+        }
+        try {
+            this.children = this.s3ResourceGenerator.getChildren(this.path.getPath(),this.offset);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        return this.children;
+    }
+
     public IResource[] list() {
-        IResource[] ir = new IResource[children.size()];
-        this.children.toArray(ir);
-        return ir;
+        List<S3Resource> children = this.getChildren();
+        if (children != null) {
+            IResource[] ir = new IResource[children.size()];
+            children.toArray(ir);
+            return ir;
+        } else {
+            return new IResource[0];
+        }
     }
 
     public Boolean isDirectory() {
@@ -109,11 +129,11 @@ public class S3Resource implements IResource {
             return new S3Resource(null,
                     bucket,
                     builder.build().toString(),
-                    new ArrayList<S3Resource>(),
+                    null,
                     false,
                     s3ResourceGenerator,
                     client,
-                    useReducedRedundancy);
+                    useReducedRedundancy, this.offset);
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }

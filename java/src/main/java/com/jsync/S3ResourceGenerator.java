@@ -64,33 +64,28 @@ public class S3ResourceGenerator {
                 }
             }
         }
-        /*
-        for (S3ObjectSummary summary : this.objects) {
-            System.out.println(summary.getKey());
-        }
-        System.exit(1);
-        */
+
         return this.objects;
     }
 
-    public S3Resource getResource(String path) throws URISyntaxException {
-        return this.getResource(path, 0);
-    }
+    public List<S3Resource> getChildren(String path, int point) throws URISyntaxException {
 
-    public S3Resource getResource(String path, int point) throws URISyntaxException {
+        //System.out.println("GETTING CHILDREN: " + path);
+
         URI uri;
         uri = new URI(path);
+
+        S3ObjectSummary theFile = null;
 
         List<S3Resource> files = new ArrayList<S3Resource>();
         List<S3Resource> subdirs = new ArrayList<S3Resource>();
         List<String> visitedSubdirs = new ArrayList<String>();
 
-        S3ObjectSummary theFile = null;
-
         int c = point;
 
         for (S3ObjectSummary object : getObjectList().subList(point, getObjectList().size())) {
             String key = "/" + object.getKey();
+            // System.out.println(" -> " + key);
             String repl = key.replaceFirst("^" + Pattern.quote(uri.getPath()) + "/", "");
 
             Boolean matches = key.matches("^" + Pattern.quote(uri.getPath()) + "/.*$");
@@ -118,7 +113,7 @@ public class S3ResourceGenerator {
                 builder.setScheme("s3");
                 builder.setHost(bucket);
                 builder.setPath(key);
-                files.add(new S3Resource(object, bucket, builder.build().toString(), null, false, this, client, useReducedRedundancy));
+                files.add(new S3Resource(object, bucket, builder.build().toString(), null, false, this, client, useReducedRedundancy, c));
             } else if ((files.size() != 0 || subdirs.size() != 0) || theFile != null){
                 break;
             }
@@ -131,12 +126,56 @@ public class S3ResourceGenerator {
             files.add(dir);
         }
 
-        //System.out.println(files);
+        return files;
+    }
 
-        if (files.size() > 0) {
-            return new S3Resource(theFile, bucket, path, files, true, this, client, useReducedRedundancy);
+
+    public S3Resource getResource(String path) throws URISyntaxException {
+        return this.getResource(path, 0);
+    }
+
+    public S3Resource getResource(String path, int point) throws URISyntaxException {
+        //System.out.println("GETTING RESOURCE: " + path);
+        URI uri;
+        uri = new URI(path);
+
+        int numberOfChildren = 0;
+
+        S3ObjectSummary theFile = null;
+
+        int c = point;
+        int off = point;
+
+        for (S3ObjectSummary object : getObjectList().subList(point, getObjectList().size())) {
+            String key = "/" + object.getKey();
+            String repl = key.replaceFirst("^" + Pattern.quote(uri.getPath()) + "/", "");
+
+            Boolean matches = key.matches("^" + Pattern.quote(uri.getPath()) + "/.*$");
+
+            if (key.equals(uri.getPath())) {
+                theFile = object;
+                off = c;
+            }
+
+            // is subdir
+            if (repl.contains("/") && !key.equals(uri.getPath()) && matches) {
+                numberOfChildren += 1;
+            }
+
+            // is file
+            else if (!repl.contains("/") && !key.equals(uri.getPath()) && matches) {
+                numberOfChildren += 1;
+            } else if (theFile != null){
+                break;
+            }
+
+            c += 1;
+        }
+
+        if (numberOfChildren > 0) {
+            return new S3Resource(theFile, bucket, path, null, true, this, client, useReducedRedundancy, off);
         } else {
-            return new S3Resource(theFile, bucket, path, files, false, this, client, useReducedRedundancy);
+            return new S3Resource(theFile, bucket, path, null, false, this, client, useReducedRedundancy, off);
         }
     }
 }
