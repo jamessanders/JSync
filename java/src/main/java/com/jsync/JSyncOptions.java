@@ -22,6 +22,7 @@ public class JSyncOptions {
                 accepts("delete", "delete files at destination that do not exists in the source dir");
                 accepts("reduced-redundancy", "use reduced redundancy when uploading files to S3");
                 accepts("rr-storage", "same as --reduced-redundancy");
+                accepts("public", "makes files public");
                 accepts("verbose",  "be verbose");
                 accepts("help", "show this help");
                 accepts("backup", "backup any modified or deleted files" ).withRequiredArg().describedAs("path");
@@ -49,6 +50,10 @@ public class JSyncOptions {
 
     public boolean useReducedRedundancy() {
         return (options.has("reduced-redundancy") || options.has("rr-storage"));
+    }
+
+    public boolean makePublic() {
+        return options.has("public");
     }
 
     public String getBackupPath() {

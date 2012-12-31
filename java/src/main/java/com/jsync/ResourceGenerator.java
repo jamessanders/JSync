@@ -50,7 +50,7 @@ public class ResourceGenerator {
         if (scheme == null || scheme.equals("file")) {
             return new FsResource(uri.getPath());
         } else if (scheme.equals("s3")) {
-            S3ResourceGenerator s3generator = new S3ResourceGenerator(options.getAwsCredentials(), path, options.useReducedRedundancy());
+            S3ResourceGenerator s3generator = new S3ResourceGenerator(options.getAwsCredentials(), path, options.useReducedRedundancy(), options.makePublic());
             try {
                 return s3generator.getResource(path);
             } catch (URISyntaxException e) {

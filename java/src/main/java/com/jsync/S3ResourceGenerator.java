@@ -20,8 +20,9 @@ public class S3ResourceGenerator {
     URI uri;
     int threadsOpen;
     boolean useReducedRedundancy;
+    boolean makePublic;
 
-    public S3ResourceGenerator(AWSCredentials creds, String base, boolean useReducedRedundancy) {
+    public S3ResourceGenerator(AWSCredentials creds, String base, boolean useReducedRedundancy, boolean makePublic) {
         URI uri = null;
         try {
             uri = new URI(base);
@@ -32,7 +33,9 @@ public class S3ResourceGenerator {
         bucket = uri.getHost();
         client = new AmazonS3Client(creds);
         threadsOpen = 0;
+
         this.useReducedRedundancy = useReducedRedundancy;
+        this.makePublic = makePublic;
     }
 
     public void incrementThreadCount() {
@@ -113,7 +116,7 @@ public class S3ResourceGenerator {
                 builder.setScheme("s3");
                 builder.setHost(bucket);
                 builder.setPath(key);
-                files.add(new S3Resource(object, bucket, builder.build().toString(), null, false, this, client, useReducedRedundancy, c));
+                files.add(new S3Resource(object, bucket, builder.build().toString(), null, false, this, client, useReducedRedundancy, makePublic, c));
             } else if ((files.size() != 0 || subdirs.size() != 0) || theFile != null){
                 break;
             }
@@ -173,9 +176,9 @@ public class S3ResourceGenerator {
         }
 
         if (numberOfChildren > 0) {
-            return new S3Resource(theFile, bucket, path, null, true, this, client, useReducedRedundancy, off);
+            return new S3Resource(theFile, bucket, path, null, true, this, client, useReducedRedundancy, makePublic, off);
         } else {
-            return new S3Resource(theFile, bucket, path, null, false, this, client, useReducedRedundancy, off);
+            return new S3Resource(theFile, bucket, path, null, false, this, client, useReducedRedundancy, makePublic, off);
         }
     }
 }

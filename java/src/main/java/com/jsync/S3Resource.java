@@ -5,6 +5,7 @@ import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.*;
 import org.apache.http.client.utils.URIBuilder;
 
+
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -29,6 +30,7 @@ public class S3Resource implements IResource {
     S3ObjectSummary s3ObjectSummary;
     ObjectMetadata s3MetaData;
     boolean useReducedRedundancy;
+    boolean makePublic;
     int offset;
 
     public S3Resource(S3ObjectSummary s3ObjectSummary,
@@ -39,6 +41,7 @@ public class S3Resource implements IResource {
                       S3ResourceGenerator s3ResourceGenerator,
                       AmazonS3Client client,
                       boolean useReducedRedundacy,
+                      boolean makePublic,
                       int offset) {
         try {
             this.path = new URI(path);
@@ -53,6 +56,7 @@ public class S3Resource implements IResource {
         this.s3ResourceGenerator = s3ResourceGenerator;
         this.s3MetaData = null;
         this.useReducedRedundancy = useReducedRedundacy;
+        this.makePublic = makePublic;
         this.offset = offset;
     }
 
@@ -133,7 +137,7 @@ public class S3Resource implements IResource {
                     false,
                     s3ResourceGenerator,
                     client,
-                    useReducedRedundancy, this.offset);
+                    useReducedRedundancy, makePublic, this.offset);
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
@@ -159,6 +163,9 @@ public class S3Resource implements IResource {
                             PutObjectRequest request = new PutObjectRequest(bucket, path.getPath().substring(1), in, getS3Metadata());
                             if (useReducedRedundancy) {
                                 request.setStorageClass(StorageClass.ReducedRedundancy.toString());
+                            }
+                            if (makePublic) {
+                                request = request.withCannedAcl(CannedAccessControlList.PublicRead);
                             }
                             client.putObject(request);
                         } catch (AmazonClientException e) {
