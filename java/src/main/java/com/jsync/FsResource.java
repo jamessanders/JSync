@@ -2,6 +2,7 @@ package com.jsync;
 import java.io.*;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Date;
 
 public class FsResource implements IResource {
 
@@ -21,7 +22,7 @@ public class FsResource implements IResource {
     }
 
     File file;
-    FileProperties props;
+    private FileProperties props;
 
     public FsResource(File file) {
         this.file = file;

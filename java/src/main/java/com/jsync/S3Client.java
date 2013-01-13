@@ -1,61 +1,60 @@
 package com.jsync;
 
+import com.amazonaws.AmazonClientException;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.ObjectListing;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.amazonaws.services.s3.model.*;
 import org.apache.http.client.utils.URIBuilder;
 
+import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-public class S3ResourceGenerator {
+/**
+ * User: sanders
+ * Date: 1/12/13
+ */
+public class S3Client {
 
-    String bucket;
-    AmazonS3Client client;
-    List<S3ObjectSummary> objects;
-    URI uri;
-    int threadsOpen;
-    boolean useReducedRedundancy;
-    boolean makePublic;
+    private AmazonS3Client client;
+    private int threadsOpen;
+    private List<S3ObjectSummary> objects;
+    private URI base;
+    private String bucket;
+    private boolean useReducedRedundancy;
+    private boolean makePublic;
 
-    public S3ResourceGenerator(AWSCredentials creds, String base, boolean useReducedRedundancy, boolean makePublic) {
-        URI uri = null;
-        try {
-            uri = new URI(base);
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-        this.uri = uri;
-        bucket = uri.getHost();
-        client = new AmazonS3Client(creds);
-        threadsOpen = 0;
 
+    public S3Client(URI base, AmazonS3Client client, boolean useReducedRedundancy, boolean makePublic) {
+        this.bucket = base.getHost();
+        this.base = base;
+        this.client = client;
+        this.threadsOpen = 0;
         this.useReducedRedundancy = useReducedRedundancy;
         this.makePublic = makePublic;
     }
 
-    public void incrementThreadCount() {
-        threadsOpen += 1;
-    }
-    public  void decrementThreadCount() {
-        threadsOpen -= 1;
-    }
-    public int getThreadsOpen() {
-        return threadsOpen;
+    public S3Client(URI base, AWSCredentials creds, boolean useReducedRedundancy, boolean makePublic) {
+        this(base, new AmazonS3Client(creds), useReducedRedundancy, makePublic);
     }
 
-    public AmazonS3Client getClient() {
-        return client;
+    private void incrementThreadCount() {
+        threadsOpen += 1;
+    }
+    private  void decrementThreadCount() {
+        threadsOpen -= 1;
+    }
+    private int getThreadsOpen() {
+        return threadsOpen;
     }
 
     private List<S3ObjectSummary> getObjectList() {
         if (this.objects == null) {
             this.objects = new ArrayList<S3ObjectSummary>();
-            ObjectListing listing = client.listObjects(bucket, uri.getPath().substring(1));
+            ObjectListing listing = client.listObjects(getBucket(), this.base.getPath().substring(1));
             while (true) {
                 for (S3ObjectSummary obj : listing.getObjectSummaries()) {
                     this.objects.add(obj);
@@ -73,8 +72,7 @@ public class S3ResourceGenerator {
 
     public List<S3Resource> getChildren(String path, int point) throws URISyntaxException {
 
-        //System.out.println("GETTING CHILDREN: " + path);
-
+        String bucket = base.getHost();
         URI uri;
         uri = new URI(path);
 
@@ -87,10 +85,9 @@ public class S3ResourceGenerator {
         int c = point;
 
         for (S3ObjectSummary object : getObjectList().subList(point, getObjectList().size())) {
-            String key = "/" + object.getKey();
-            // System.out.println(" -> " + key);
-            String repl = key.replaceFirst("^" + Pattern.quote(uri.getPath()) + "/", "");
 
+            String key = "/" + object.getKey();
+            String repl = key.replaceFirst("^" + Pattern.quote(uri.getPath()) + "/", "");
             Boolean matches = key.matches("^" + Pattern.quote(uri.getPath()) + "/.*$");
 
             if (key.equals(uri.getPath())) {
@@ -116,7 +113,7 @@ public class S3ResourceGenerator {
                 builder.setScheme("s3");
                 builder.setHost(bucket);
                 builder.setPath(key);
-                files.add(new S3Resource(object, bucket, builder.build().toString(), null, false, this, client, useReducedRedundancy, makePublic, c));
+                files.add(new S3Resource(object,  builder.build(), false, this, c));
             } else if ((files.size() != 0 || subdirs.size() != 0) || theFile != null){
                 break;
             }
@@ -138,7 +135,7 @@ public class S3ResourceGenerator {
     }
 
     public S3Resource getResource(String path, int point) throws URISyntaxException {
-        //System.out.println("GETTING RESOURCE: " + path);
+
         URI uri;
         uri = new URI(path);
 
@@ -175,10 +172,80 @@ public class S3ResourceGenerator {
             c += 1;
         }
 
-        if (numberOfChildren > 0) {
-            return new S3Resource(theFile, bucket, path, null, true, this, client, useReducedRedundancy, makePublic, off);
-        } else {
-            return new S3Resource(theFile, bucket, path, null, false, this, client, useReducedRedundancy, makePublic, off);
+        return new S3Resource(theFile, uri, numberOfChildren > 0, this, off);
+
+    }
+
+    public OutputStream getWriter(final URI path, final ObjectMetadata metadata) {
+        final PipedInputStream in = new PipedInputStream();
+        final PipedOutputStream out;
+        try {
+            out = new PipedOutputStream(in);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
         }
+        incrementThreadCount();
+        new Thread(
+                new Runnable(){
+                    public void run(){
+                        try {
+                            PutObjectRequest request = new PutObjectRequest(getBucket(), path.getPath().substring(1), in, metadata);
+                            if (useReducedRedundancy) {
+                                request.setStorageClass(StorageClass.ReducedRedundancy.toString());
+                            }
+                            if (makePublic) {
+                                request = request.withCannedAcl(CannedAccessControlList.PublicRead);
+                            }
+                            client.putObject(request);
+                        } catch (AmazonClientException e) {
+                            e.printStackTrace();
+                        }
+                        try {
+                            in.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        Thread.yield();
+                        decrementThreadCount();
+                    }
+                }
+        ).start();
+        return out;
+    }
+
+    public Boolean cleanupWrites () {
+        while (getThreadsOpen() >= 1) {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        return true;
+    }
+
+    public S3Object getObject(S3Resource resource) {
+
+        return client.getObject(this.getBucket(), resource.getKey());
+
+    }
+
+    public void deleteObject(S3Resource resource) {
+
+        client.deleteObject(this.getBucket(), resource.getKey());
+
+    }
+
+    public ObjectMetadata getObjectMetadata(S3Resource resource) {
+        return client.getObjectMetadata(this.getBucket(), resource.getKey());
+    }
+
+    public void copyObject(S3Resource in, S3Resource out) {
+        client.copyObject(this.getBucket(), in.getKey(), out.getBucket(), out.getKey());
+    }
+
+    public String getBucket() {
+        return bucket;
     }
 }

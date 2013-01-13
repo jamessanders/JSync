@@ -40,23 +40,33 @@ public class ResourceGenerator {
         try {
             uri = new URI(path);
         } catch (URISyntaxException e) {
-            if (SystemUtils.IS_OS_WINDOWS) {
-                return new FsResourceWindows(path);
-            } else {
-                return new FsResource(path);
-            }
+            return generateFileResource(path);
         }
         String scheme = uri.getScheme();
         if (scheme == null || scheme.equals("file")) {
-            return new FsResource(uri.getPath());
+            return generateFileResource(path);
         } else if (scheme.equals("s3")) {
-            S3ResourceGenerator s3generator = new S3ResourceGenerator(options.getAwsCredentials(), path, options.useReducedRedundancy(), options.makePublic());
+            S3Client s3Client =
+                    new S3Client(
+                            uri,
+                            options.getAwsCredentials(),
+                            options.useReducedRedundancy(),
+                            options.makePublic());
             try {
-                return s3generator.getResource(path);
+                return s3Client.getResource(path);
             } catch (URISyntaxException e) {
                 e.printStackTrace();
             }
         }
         return null;
     }
+
+    public IResource generateFileResource(String path) {
+        if (SystemUtils.IS_OS_WINDOWS) {
+            return new FsResourceWindows(path);
+        } else {
+            return new FsResourceUnix(path);
+        }
+    }
+
 }

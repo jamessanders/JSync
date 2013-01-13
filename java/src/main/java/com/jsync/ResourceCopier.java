@@ -9,7 +9,7 @@ public class ResourceCopier {
 
     public static void copy(S3Resource in, S3Resource out) throws IOException {
         System.out.println(" + remote copy: " + in.getKey() + " -> " + out.getKey());
-        in.getClient().copyObject(in.getBucket(), in.getKey(), out.getBucket(), out.getKey());
+        in.copy(out);
     }
 
     public static void copy(IResource in, IResource out) throws IOException {
@@ -18,7 +18,6 @@ public class ResourceCopier {
         } else {
 
             out.mkdirs();
-
 
             int uid = in.getUid();
             int gid = in.getGid();

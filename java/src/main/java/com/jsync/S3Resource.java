@@ -20,48 +20,35 @@ import java.util.List;
 
 public class S3Resource implements IResource {
 
-    String bucket;
-
     URI path;
     List<S3Resource> children;
     Boolean isDirectory;
-    AmazonS3Client client;
-    S3ResourceGenerator s3ResourceGenerator;
+    S3Client client;
     S3ObjectSummary s3ObjectSummary;
     ObjectMetadata s3MetaData;
-    boolean useReducedRedundancy;
-    boolean makePublic;
     int offset;
 
     public S3Resource(S3ObjectSummary s3ObjectSummary,
-                      String bucket,
-                      String path,
-                      List<S3Resource> children,
+                      URI path,
                       Boolean isDirectory,
-                      S3ResourceGenerator s3ResourceGenerator,
-                      AmazonS3Client client,
-                      boolean useReducedRedundacy,
-                      boolean makePublic,
+                      S3Client client,
                       int offset) {
-        try {
-            this.path = new URI(path);
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-        }
-        this.s3ObjectSummary = s3ObjectSummary;
-        this.bucket = bucket;
-        this.isDirectory = isDirectory;
+
+        this.path = path;
         this.client = client;
-        this.children = children;
-        this.s3ResourceGenerator = s3ResourceGenerator;
+        this.s3ObjectSummary = s3ObjectSummary;
+        this.isDirectory = isDirectory;
+        this.children = null;
         this.s3MetaData = null;
-        this.useReducedRedundancy = useReducedRedundacy;
-        this.makePublic = makePublic;
         this.offset = offset;
     }
 
-    public AmazonS3Client getClient() { return client; }
-    public String getBucket() { return bucket; }
+    private S3Client getClient() { return client; }
+
+    public String getBucket() {
+        return this.getClient().getBucket();
+    }
+
     public String getKey() {
         if (s3ObjectSummary != null) {
             return s3ObjectSummary.getKey();
@@ -70,16 +57,22 @@ public class S3Resource implements IResource {
         }
     }
 
+    public void copy(S3Resource out) {
+
+        this.getClient().copyObject(this, out);
+
+    }
+
     public String toString () {
         return path.toString();
     }
 
-    public List<S3Resource> getChildren() {
+    private List<S3Resource> getChildren() {
         if (this.children != null) {
             return this.children;
         }
         try {
-            this.children = this.s3ResourceGenerator.getChildren(this.path.getPath(),this.offset);
+            this.children = this.getClient().getChildren(this.path.getPath(), this.offset);
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
@@ -131,13 +124,10 @@ public class S3Resource implements IResource {
         }
         try {
             return new S3Resource(null,
-                    bucket,
-                    builder.build().toString(),
-                    null,
+                    builder.build(),
                     false,
-                    s3ResourceGenerator,
                     client,
-                    useReducedRedundancy, makePublic, this.offset);
+                    this.offset);
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }
@@ -147,67 +137,32 @@ public class S3Resource implements IResource {
     public void mkdirs() {}
 
     public OutputStream getWriter() {
-        final PipedInputStream in = new PipedInputStream();
-        final PipedOutputStream out;
-        try {
-            out = new PipedOutputStream(in);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-        s3ResourceGenerator.incrementThreadCount();
-        new Thread(
-                new Runnable(){
-                    public void run(){
-                        try {
-                            PutObjectRequest request = new PutObjectRequest(bucket, path.getPath().substring(1), in, getS3Metadata());
-                            if (useReducedRedundancy) {
-                                request.setStorageClass(StorageClass.ReducedRedundancy.toString());
-                            }
-                            if (makePublic) {
-                                request = request.withCannedAcl(CannedAccessControlList.PublicRead);
-                            }
-                            client.putObject(request);
-                        } catch (AmazonClientException e) {
-                            e.printStackTrace();
-                        }
-                        try {
-                            in.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        Thread.yield();
-                        s3ResourceGenerator.decrementThreadCount();
-                    }
-                }
-        ).start();
-        return out;
+        return this.getClient().getWriter(this.path, getS3Metadata());
     }
 
     public InputStream getReader() {
-        S3Object obj = this.client.getObject(this.bucket, this.path.getPath().substring(1));
+        S3Object obj = this.getClient().getObject(this);
         return obj.getObjectContent();
     }
-    
-    public Boolean finishWrite () {
-        while (s3ResourceGenerator.getThreadsOpen() >= 1) {
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        return true;
+
+    public Boolean finishWrite() {
+        return this.getClient().cleanupWrites();
     }
 
+
     public void delete() {
-        client.deleteObject(this.getBucket(), this.path.getPath().substring(1));
+        this.getClient().deleteObject(this);
     }
 
     public long lastModified() {
-        if (s3ObjectSummary == null) {
+        ObjectMetadata metadata = this.getS3Metadata();
+        String mtime = metadata.getUserMetadata().get("mtime");
+        if (mtime != null) {
+            return (new Date(Long.parseLong(mtime))).getTime()*1000;
+        } else if (s3ObjectSummary == null) {
             Date lastModifed = getS3Metadata().getLastModified();
             if (lastModifed != null) {
+                System.err.println("Using current time as last modifed");
                 return lastModifed.getTime();
             } else {
                 return 0;
@@ -220,7 +175,7 @@ public class S3Resource implements IResource {
     public ObjectMetadata getS3Metadata() {
         if (this.s3MetaData == null) {
             try {
-                this.s3MetaData = client.getObjectMetadata(bucket, this.getKey());
+                this.s3MetaData = client.getObjectMetadata(this);
             } catch (Throwable e) {
                 this.s3MetaData = new ObjectMetadata();
             }

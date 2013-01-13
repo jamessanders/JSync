@@ -9,7 +9,7 @@ public class JSync {
         }
     }
 
-    public static void exitWithHelp(JSyncOptions options, int code) {
+    private static void exitWithHelp(JSyncOptions options, int code) {
         System.err.println("");
         System.err.println("Usage: jsync [options] <input_path> <output_path>");
         System.err.println("");
