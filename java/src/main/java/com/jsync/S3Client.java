@@ -238,6 +238,7 @@ public class S3Client {
     }
 
     public ObjectMetadata getObjectMetadata(S3Resource resource) {
+
         return client.getObjectMetadata(this.getBucket(), resource.getKey());
     }
 

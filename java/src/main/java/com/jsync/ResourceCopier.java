@@ -61,7 +61,8 @@ public class ResourceCopier {
     }
 
     private static boolean filesDiffer(IResource f1, IResource f2) {
-        return (f1.lastModified() > f2.lastModified() || f1.getSize() != f2.getSize());
+        boolean datesDiffer = (f1.lastModified() > f2.lastModified() && f1.getModifiedTime() > f2.getModifiedTime());
+        return (datesDiffer || f1.getSize() != f2.getSize());
     }
 
     public static void performDeletions(IResource source, IResource destination, IResource backup) {

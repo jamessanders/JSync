@@ -155,21 +155,14 @@ public class S3Resource implements IResource {
     }
 
     public long lastModified() {
-        ObjectMetadata metadata = this.getS3Metadata();
-        String mtime = metadata.getUserMetadata().get("mtime");
-        if (mtime != null) {
-            return (new Date(Long.parseLong(mtime))).getTime()*1000;
-        } else if (s3ObjectSummary == null) {
-            Date lastModifed = getS3Metadata().getLastModified();
-            if (lastModifed != null) {
-                System.err.println("Using current time as last modifed");
-                return lastModifed.getTime();
-            } else {
-                return 0;
+        long lmod = 0;
+        if (s3ObjectSummary != null) {
+            Date lastModified = this.s3ObjectSummary.getLastModified();
+            if (lastModified != null) {
+                lmod = lastModified.getTime();
             }
-        } else {
-            return s3ObjectSummary.getLastModified().getTime();
         }
+        return lmod;
     }
 
     public ObjectMetadata getS3Metadata() {
