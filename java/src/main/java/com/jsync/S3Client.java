@@ -12,6 +12,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.net.URLEncoder;
 
 /**
  * User: sanders
@@ -26,6 +27,7 @@ public class S3Client {
     private String bucket;
     private boolean useReducedRedundancy;
     private boolean makePublic;
+    private String fileEncoding;
 
 
     public S3Client(URI base, AmazonS3Client client, boolean useReducedRedundancy, boolean makePublic) {
@@ -35,6 +37,7 @@ public class S3Client {
         this.threadsOpen = 0;
         this.useReducedRedundancy = useReducedRedundancy;
         this.makePublic = makePublic;
+        this.fileEncoding = System.getProperty("file.encoding");
     }
 
     public S3Client(URI base, AWSCredentials creds, boolean useReducedRedundancy, boolean makePublic) {
@@ -73,8 +76,12 @@ public class S3Client {
     public List<S3Resource> getChildren(String path, int point) throws URISyntaxException {
 
         String bucket = base.getHost();
-        URI uri;
-        uri = new URI(path);
+        URI uri = null;
+        try {
+            uri = new URI(URLEncoder.encode(path, this.fileEncoding));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
 
         S3ObjectSummary theFile = null;
 
