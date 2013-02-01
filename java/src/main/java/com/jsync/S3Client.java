@@ -9,6 +9,7 @@ import org.apache.http.client.utils.URIBuilder;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -91,31 +92,38 @@ public class S3Client {
 
         int c = point;
 
+        String basepath = null;
+        try {
+            basepath = URLDecoder.decode(uri.getPath(),this.fileEncoding);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
         for (S3ObjectSummary object : getObjectList().subList(point, getObjectList().size())) {
 
             String key = "/" + object.getKey();
-            String repl = key.replaceFirst("^" + Pattern.quote(uri.getPath()) + "/", "");
-            Boolean matches = key.matches("^" + Pattern.quote(uri.getPath()) + "/.*$");
+            String repl = key.replaceFirst("^" + Pattern.quote(basepath) + "/", "");
+            Boolean matches = key.matches("^" + Pattern.quote(basepath) + "/.*$");
 
-            if (key.equals(uri.getPath())) {
+            if (key.equals(basepath)) {
                 theFile = object;
             }
 
             // is subdir
-            if (repl.contains("/") && !key.equals(uri.getPath()) && matches) {
+            if (repl.contains("/") && !key.equals(basepath) && matches) {
                 String name = repl.substring(0, repl.indexOf("/", 1));
                 if (!visitedSubdirs.contains(name)) {
                     URIBuilder builder = new URIBuilder();
                     builder.setScheme("s3");
                     builder.setHost(bucket);
-                    builder.setPath(uri.getPath() + "/" + name);
+                    builder.setPath(basepath + "/" + name);
                     subdirs.add(this.getResource(builder.build().toString(), c));
                     visitedSubdirs.add(name);
                 }
             }
 
             // is file
-            else if (!repl.contains("/") && !key.equals(uri.getPath()) && matches) {
+            else if (!repl.contains("/") && !key.equals(basepath) && matches) {
                 URIBuilder builder = new URIBuilder();
                 builder.setScheme("s3");
                 builder.setHost(bucket);

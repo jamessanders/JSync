@@ -69,7 +69,6 @@ public class ResourceCopier {
         if (destination.isDirectory()) {
             for (IResource resource : destination.list()) {
                 IResource counterpart = source.join(resource.getName());
-                System.out.println(counterpart);
                 IResource backupTo = null;
                 if (backup != null) {
                     backupTo = backup.join(resource.getName());
